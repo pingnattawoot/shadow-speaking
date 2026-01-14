@@ -1,27 +1,27 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 
 interface InputSectionProps {
-  onStart: (text: string) => void
+  onStart: (text: string) => void;
 }
 
-const DEMO_TEXT = `Success is not final, failure is not fatal: it is the courage to continue that counts. I never dreamed about success. I worked for it. Don't watch the clock; do what it does. Keep going.`
+const DEMO_TEXT = `Success is not final, failure is not fatal: it is the courage to continue that counts. I never dreamed about success. I worked for it. Don't watch the clock; do what it does. Keep going.`;
 
 export default function InputSection({ onStart }: InputSectionProps) {
-  const [text, setText] = useState('')
+  const [text, setText] = useState("");
 
   const handleStart = () => {
     if (!text.trim()) {
-      alert('Please enter some text first!')
-      return
+      alert("Please enter some text first!");
+      return;
     }
-    onStart(text)
-  }
+    onStart(text);
+  };
 
   const fillDemo = () => {
-    setText(DEMO_TEXT)
-  }
+    setText(DEMO_TEXT);
+  };
 
   return (
     <div className="w-full max-w-2xl animate-fade-in">
@@ -44,10 +44,23 @@ export default function InputSection({ onStart }: InputSectionProps) {
         />
 
         <div className="mt-6 flex justify-center">
-          <button onClick={handleStart} className="btn-primary px-8 py-3 flex items-center gap-2">
+          <button
+            onClick={handleStart}
+            className="btn-primary px-8 py-3 flex items-center gap-2"
+          >
             <span>Start Practicing</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              />
             </svg>
           </button>
         </div>
@@ -62,6 +75,5 @@ export default function InputSection({ onStart }: InputSectionProps) {
         </button>
       </div>
     </div>
-  )
+  );
 }
-

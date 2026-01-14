@@ -5,9 +5,16 @@
 @layer base {
   body {
     @apply bg-cream-50 text-slate-800 antialiased;
-    background-image: 
-      radial-gradient(at 20% 0%, rgba(255, 181, 166, 0.15) 0px, transparent 50%),
-      radial-gradient(at 80% 10%, rgba(178, 207, 255, 0.12) 0px, transparent 50%),
+    background-image: radial-gradient(
+        at 20% 0%,
+        rgba(255, 181, 166, 0.15) 0px,
+        transparent 50%
+      ),
+      radial-gradient(
+        at 80% 10%,
+        rgba(178, 207, 255, 0.12) 0px,
+        transparent 50%
+      ),
       radial-gradient(at 0% 60%, rgba(179, 207, 179, 0.1) 0px, transparent 50%);
     background-attachment: fixed;
     min-height: 100vh;
@@ -18,13 +25,13 @@
   .glass-card {
     @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl;
   }
-  
+
   .btn-primary {
     @apply bg-coral-400 hover:bg-coral-500 text-white font-medium 
            rounded-full transition-all duration-200 active:scale-95 
            shadow-lg shadow-coral-200/50;
   }
-  
+
   .btn-secondary {
     @apply bg-white hover:bg-slate-50 text-slate-600 
            rounded-full transition-all duration-200 active:scale-95 
@@ -49,4 +56,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-
