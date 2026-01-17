@@ -12,6 +12,9 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "ShadowSpeak - English Speaking Practice",
   description: "Practice your English pronunciation with shadowing technique",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -21,8 +24,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} font-sans`}>{children}</body>
-      <Analytics />
+      <body className={`${dmSans.variable} font-sans`}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

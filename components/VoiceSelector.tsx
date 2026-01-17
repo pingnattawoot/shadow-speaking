@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 interface Voice {
   name: string;
   lang: string;
@@ -17,6 +19,22 @@ export default function VoiceSelector({
   selectedVoice,
   onSelect,
 }: VoiceSelectorProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <span>Voice:</span>
+        <span className="text-coral-500 font-medium text-xs">Loading...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 text-xs text-slate-500">
       <span>Voice:</span>
