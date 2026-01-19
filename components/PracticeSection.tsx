@@ -1,25 +1,70 @@
 "use client";
 
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import VoiceRecorder from "./VoiceRecorder";
 import VoiceSelector from "./VoiceSelector";
 
 interface PracticeSectionProps {
   sentences: string[];
   onReset: () => void;
+  onUpdateSentence?: (index: number, newText: string) => void;
 }
 
 export default function PracticeSection({
   sentences,
   onReset,
+  onUpdateSentence,
 }: PracticeSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { voices, selectedVoice, setSelectedVoice, speak, isSpeaking } =
     useSpeechSynthesis();
 
   const currentSentence = sentences[currentIndex];
   const progress = ((currentIndex + 1) / sentences.length) * 100;
+
+  // Auto-resize textarea and focus
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+      // Auto-resize
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
+    }
+  }, [isEditing]);
+
+  const handleStartEdit = () => {
+    if (!onUpdateSentence) return;
+    setEditText(currentSentence);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    const trimmed = editText.trim();
+    if (trimmed && trimmed !== currentSentence && onUpdateSentence) {
+      onUpdateSentence(currentIndex, trimmed);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditText("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      handleCancelEdit();
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    }
+  };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
@@ -56,19 +101,82 @@ export default function PracticeSection({
       </div>
 
       {/* Sentence Display Card */}
-      <div className="glass-card w-full rounded-3xl p-8 md:p-12 min-h-[200px] flex items-center justify-center relative overflow-hidden">
+      <div className="glass-card w-full rounded-3xl p-8 md:p-12 min-h-[200px] flex items-center justify-center relative overflow-hidden group">
         {/* Decorative quotes */}
         <div className="absolute top-4 left-6 text-6xl text-coral-200 font-serif opacity-50 select-none">
           &ldquo;
         </div>
 
-        <p
-          key={currentIndex}
-          className="text-2xl md:text-3xl lg:text-4xl text-center 
-                  font-medium text-slate-700 leading-snug animate-fade-in px-8"
-        >
-          {currentSentence}
-        </p>
+        {isEditing ? (
+          <div className="w-full px-4 animate-fade-in">
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={(e) => {
+                setEditText(e.target.value);
+                // Auto-resize on change
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSaveEdit}
+              className="w-full text-2xl md:text-3xl lg:text-4xl text-center 
+                       font-medium text-slate-700 leading-snug bg-transparent
+                       border-none outline-none resize-none
+                       focus:ring-0 placeholder:text-slate-300"
+              placeholder="Enter your sentence..."
+              rows={1}
+            />
+            <p className="text-center text-xs text-slate-400 mt-3 animate-fade-in">
+              Press{" "}
+              <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">
+                Enter
+              </kbd>{" "}
+              to save ·{" "}
+              <kbd className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-mono">
+                Esc
+              </kbd>{" "}
+              to cancel
+            </p>
+          </div>
+        ) : (
+          <div
+            onClick={handleStartEdit}
+            className={`relative px-8 ${onUpdateSentence ? "cursor-text" : ""}`}
+          >
+            <p
+              key={currentIndex}
+              className="text-2xl md:text-3xl lg:text-4xl text-center 
+                      font-medium text-slate-700 leading-snug animate-fade-in"
+            >
+              {currentSentence}
+            </p>
+            {/* Edit hint - shows on hover */}
+            {onUpdateSentence && (
+              <div
+                className="absolute -top-8 left-1/2 -translate-x-1/2 
+                            flex items-center gap-1.5 text-xs text-slate-400
+                            opacity-0 group-hover:opacity-100 transition-opacity
+                            pointer-events-none whitespace-nowrap"
+              >
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+                Click to edit
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="absolute bottom-4 right-6 text-6xl text-coral-200 font-serif opacity-50 select-none rotate-180">
           &ldquo;

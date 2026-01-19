@@ -45,7 +45,7 @@ export default function SentenceEditor({
 
     // Split back to original sentences
     const newItems = [...items];
-    
+
     // We need to reconstruct from the merged text
     // Split by sentence endings
     const parts = item.text.match(/[^.!?]+[.!?]+/g) || [item.text];
@@ -99,11 +99,10 @@ export default function SentenceEditor({
               {/* Sentence Card */}
               <div
                 onClick={() => item.originalIndices.length > 1 && handleSplit(index)}
-                className={`p-3 rounded-xl border transition-all ${
-                  item.originalIndices.length > 1
-                    ? "bg-coral-50 border-coral-200 cursor-pointer hover:bg-coral-100 active:scale-[0.99]"
-                    : "bg-white/60 border-slate-100"
-                }`}
+                className={`p-3 rounded-xl border transition-all ${item.originalIndices.length > 1
+                  ? "bg-coral-50 border-coral-200 cursor-pointer hover:bg-coral-100 active:scale-[0.99]"
+                  : "bg-white/60 border-slate-100"
+                  }`}
               >
                 <div className="flex items-start gap-2">
                   <span className="text-xs font-bold text-coral-400 mt-0.5 shrink-0">

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import InputSection from "@/components/InputSection";
 import PracticeSection from "@/components/PracticeSection";
+import SavedScripts, { SavedScript } from "@/components/SavedScripts";
 import SentenceEditor from "@/components/SentenceEditor";
+import { useCallback, useEffect, useState } from "react";
 
 interface SentenceItem {
   id: string;
@@ -11,15 +12,93 @@ interface SentenceItem {
   originalIndices: number[];
 }
 
+const STORAGE_KEY = "shadowspeak-scripts";
+
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [sentenceItems, setSentenceItems] = useState<SentenceItem[]>([]);
   const [isStarted, setIsStarted] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [showSavedScripts, setShowSavedScripts] = useState(false);
+  const [savedScripts, setSavedScripts] = useState<SavedScript[]>([]);
+  const [currentScriptId, setCurrentScriptId] = useState<string | null>(null);
 
+  // Load saved scripts from localStorage
   useEffect(() => {
     setMounted(true);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const scripts = JSON.parse(stored) as SavedScript[];
+        setSavedScripts(scripts);
+      }
+    } catch (e) {
+      console.error("Failed to load saved scripts:", e);
+    }
   }, []);
+
+  // Save scripts to localStorage whenever they change
+  const persistScripts = useCallback((scripts: SavedScript[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
+      setSavedScripts(scripts);
+    } catch (e) {
+      console.error("Failed to save scripts:", e);
+    }
+  }, []);
+
+  const handleSaveScript = useCallback(
+    (name: string) => {
+      const newScript: SavedScript = {
+        id: `script-${Date.now()}`,
+        name,
+        sentences: sentenceItems,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      const updated = [newScript, ...savedScripts];
+      persistScripts(updated);
+      setCurrentScriptId(newScript.id);
+    },
+    [sentenceItems, savedScripts, persistScripts]
+  );
+
+  const handleUpdateScript = useCallback(
+    (id: string) => {
+      const updated = savedScripts.map((script) =>
+        script.id === id
+          ? { ...script, sentences: sentenceItems, updatedAt: Date.now() }
+          : script
+      );
+      persistScripts(updated);
+    },
+    [sentenceItems, savedScripts, persistScripts]
+  );
+
+  const handleDeleteScript = useCallback(
+    (id: string) => {
+      const updated = savedScripts.filter((script) => script.id !== id);
+      persistScripts(updated);
+      if (currentScriptId === id) {
+        setCurrentScriptId(null);
+      }
+    },
+    [savedScripts, persistScripts, currentScriptId]
+  );
+
+  const handleLoadScript = useCallback(
+    (sentences: SentenceItem[]) => {
+      setSentenceItems(sentences);
+      setIsStarted(true);
+      setShowSavedScripts(false);
+      // Find the script id that matches
+      const matchingScript = savedScripts.find(
+        (s) => JSON.stringify(s.sentences) === JSON.stringify(sentences)
+      );
+      setCurrentScriptId(matchingScript?.id ?? null);
+    },
+    [savedScripts]
+  );
 
   const handleStart = (text: string) => {
     // Split text into sentences
@@ -40,15 +119,27 @@ export default function Home() {
 
     setSentenceItems(items);
     setIsStarted(true);
+    setCurrentScriptId(null); // New script, not saved yet
   };
 
   const handleReset = () => {
     setSentenceItems([]);
     setIsStarted(false);
+    setCurrentScriptId(null);
   };
 
   const handleUpdateSentences = (items: SentenceItem[]) => {
     setSentenceItems(items);
+  };
+
+  const handleUpdateSingleSentence = (index: number, newText: string) => {
+    setSentenceItems((prev) => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index] = { ...updated[index], text: newText };
+      }
+      return updated;
+    });
   };
 
   // Extract just the text for PracticeSection
@@ -111,35 +202,113 @@ export default function Home() {
             Shadow<span className="text-coral-400">Speak</span>
           </span>
         </div>
-        {isStarted && (
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowEditor(true)}
-              className="text-sm font-medium text-slate-500 hover:text-coral-500 transition-colors flex items-center gap-1"
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Saved Scripts Button - Always visible */}
+          <button
+            onClick={() => setShowSavedScripts(true)}
+            className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-sm font-medium text-slate-500 
+                     hover:text-coral-500 hover:bg-coral-50 active:bg-coral-100
+                     transition-colors flex items-center gap-1.5 relative"
+          >
+            <svg
+              className="w-5 h-5 sm:w-4 sm:h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+              />
+            </svg>
+            <span className="hidden sm:inline">My Scripts</span>
+            {savedScripts.length > 0 && (
+              <span className="absolute top-0.5 right-0.5 sm:top-1 sm:-right-1 w-4 h-4 bg-coral-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {savedScripts.length}
+              </span>
+            )}
+          </button>
+
+          {isStarted && (
+            <>
+              {/* Save/Update Button */}
+              <button
+                onClick={() => setShowSavedScripts(true)}
+                className={`p-2.5 sm:px-3 sm:py-2 rounded-xl text-sm font-medium transition-colors 
+                          flex items-center gap-1.5 ${
+                            currentScriptId
+                              ? "text-sage-500 hover:text-sage-600 hover:bg-sage-50 active:bg-sage-100"
+                              : "text-coral-500 hover:text-coral-600 hover:bg-coral-50 active:bg-coral-100"
+                          }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              <span className="hidden sm:inline">Edit</span>
-            </button>
-            <button
-              onClick={handleReset}
-              className="text-sm font-medium text-slate-400 hover:text-coral-500 transition-colors"
-            >
-              Start Over
-            </button>
-          </div>
-        )}
+                <svg
+                  className="w-5 h-5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                  />
+                </svg>
+                <span className="hidden sm:inline">
+                  {currentScriptId ? "Saved ✓" : "Save"}
+                </span>
+              </button>
+
+              {/* Edit Sentences Button */}
+              <button
+                onClick={() => setShowEditor(true)}
+                className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-sm font-medium text-slate-500 
+                         hover:text-coral-500 hover:bg-coral-50 active:bg-coral-100
+                         transition-colors flex items-center gap-1.5"
+              >
+                <svg
+                  className="w-5 h-5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+
+              {/* Start Over Button */}
+              <button
+                onClick={handleReset}
+                className="p-2.5 sm:px-3 sm:py-2 rounded-xl text-sm font-medium text-slate-400 
+                         hover:text-coral-500 hover:bg-coral-50 active:bg-coral-100
+                         transition-colors flex items-center gap-1.5"
+              >
+                <svg
+                  className="w-5 h-5 sm:hidden"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Start Over</span>
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
@@ -147,7 +316,11 @@ export default function Home() {
         {!isStarted ? (
           <InputSection onStart={handleStart} />
         ) : (
-          <PracticeSection sentences={sentences} onReset={handleReset} />
+          <PracticeSection
+            sentences={sentences}
+            onReset={handleReset}
+            onUpdateSentence={handleUpdateSingleSentence}
+          />
         )}
       </main>
 
@@ -157,6 +330,20 @@ export default function Home() {
           sentences={sentenceItems}
           onUpdate={handleUpdateSentences}
           onClose={() => setShowEditor(false)}
+        />
+      )}
+
+      {/* Saved Scripts Modal */}
+      {showSavedScripts && (
+        <SavedScripts
+          currentSentences={sentenceItems}
+          onLoad={handleLoadScript}
+          onClose={() => setShowSavedScripts(false)}
+          savedScripts={savedScripts}
+          onSave={handleSaveScript}
+          onDelete={handleDeleteScript}
+          onUpdate={handleUpdateScript}
+          currentScriptId={currentScriptId}
         />
       )}
     </div>
