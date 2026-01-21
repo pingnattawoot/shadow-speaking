@@ -20,8 +20,15 @@ export default function PracticeSection({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { voices, selectedVoice, setSelectedVoice, speak, isSpeaking } =
-    useSpeechSynthesis();
+  const {
+    voices,
+    selectedVoice,
+    setSelectedVoice,
+    speak,
+    isSpeaking,
+    rate,
+    setRate,
+  } = useSpeechSynthesis();
 
   const currentSentence = sentences[currentIndex];
   const progress = ((currentIndex + 1) / sentences.length) * 100;
@@ -262,12 +269,85 @@ export default function PracticeSection({
         {/* Voice Recorder */}
         <VoiceRecorder resetTrigger={currentIndex} />
 
-        {/* Voice Selector */}
-        <VoiceSelector
-          voices={voices}
-          selectedVoice={selectedVoice}
-          onSelect={setSelectedVoice}
-        />
+        {/* Speed & Voice Controls */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          {/* Speed Control */}
+          <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-2xl px-4 py-2.5 border border-slate-100">
+            <button
+              onClick={() => setRate(Math.max(0.5, rate - 0.1))}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-coral-500 hover:bg-coral-50 
+                       active:bg-coral-100 transition-colors disabled:opacity-30"
+              disabled={rate <= 0.5}
+              title="Slower"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                />
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-2 min-w-[100px]">
+              <span className="text-lg" title="Slower">
+                🐢
+              </span>
+              <input
+                type="range"
+                min="0.5"
+                max="1.3"
+                step="0.1"
+                value={rate}
+                onChange={(e) => setRate(parseFloat(e.target.value))}
+                className="w-16 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer
+                         [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
+                         [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-coral-400 
+                         [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
+                         [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:bg-coral-500
+                         [&::-webkit-slider-thumb]:transition-colors"
+              />
+              <span className="text-lg" title="Faster">
+                🐇
+              </span>
+            </div>
+
+            <button
+              onClick={() => setRate(Math.min(1.3, rate + 0.1))}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-coral-500 hover:bg-coral-50 
+                       active:bg-coral-100 transition-colors disabled:opacity-30"
+              disabled={rate >= 1.3}
+              title="Faster"
+            >
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Voice Selector */}
+          <VoiceSelector
+            voices={voices}
+            selectedVoice={selectedVoice}
+            onSelect={setSelectedVoice}
+          />
+        </div>
       </div>
     </div>
   );

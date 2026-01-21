@@ -8,11 +8,15 @@ interface Voice {
   voice: SpeechSynthesisVoice;
 }
 
+// Speed options: 0.6 (slow) to 1.2 (fast), default 0.9
+const DEFAULT_RATE = 0.9;
+
 export function useSpeechSynthesis() {
   const [voices, setVoices] = useState<Voice[]>([]);
   const [selectedVoice, setSelectedVoice] =
     useState<SpeechSynthesisVoice | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [rate, setRate] = useState(DEFAULT_RATE);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -64,7 +68,7 @@ export function useSpeechSynthesis() {
         utterance.voice = selectedVoice;
       }
 
-      utterance.rate = 0.9; // Slightly slower for practice
+      utterance.rate = rate;
       utterance.pitch = 1;
 
       utterance.onstart = () => setIsSpeaking(true);
@@ -73,7 +77,7 @@ export function useSpeechSynthesis() {
 
       synth.speak(utterance);
     },
-    [selectedVoice]
+    [selectedVoice, rate]
   );
 
   const stop = useCallback(() => {
@@ -89,5 +93,7 @@ export function useSpeechSynthesis() {
     speak,
     stop,
     isSpeaking,
+    rate,
+    setRate,
   };
 }
